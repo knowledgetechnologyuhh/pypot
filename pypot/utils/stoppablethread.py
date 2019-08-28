@@ -14,6 +14,7 @@ class StoppableThread(object):
     .. warning:: It is up to the subclass to correctly respond to the stop, pause/resume signals (see :meth:`~pypot.utils.stoppablethread.StoppableThread.run` for details).
 
     """
+
     def __init__(self, setup=None, target=None, teardown=None):
         """
         :param func setup: specific setup function to use (otherwise self.setup)
@@ -189,6 +190,7 @@ class StoppableLoopThread(StoppableThread):
     .. note:: This class does not mean to be accurate. The given frequency will be approximately followed - depending for instance on CPU load - and only reached if the update method takes less time than the chosen loop period.
 
     """
+
     def __init__(self, frequency, update=None):
         """
         :params float frequency: called frequency of the :meth:`~pypot.stoppablethread.StoppableLoopThread.update` method

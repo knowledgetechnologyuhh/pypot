@@ -1,20 +1,16 @@
 #!/usr/bin/env python
 
-from io import open
 import re
 import sys
+from io import open
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 
 def version():
     with open('pypot/_version.py') as f:
         return re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", f.read()).group(1)
 
-
-extra = {}
-if sys.version_info >= (3,):
-    extra['use_2to3'] = True
 
 install_requires = ['numpy',
                     'pyserial>2.6',
@@ -24,6 +20,16 @@ install_requires = ['numpy',
                     'bottle',
                     'poppy-creature>=2'  # Kept to avoid breaking old imports
                     ]
+
+extra = {}
+dependency_links = []
+exclude = []
+if sys.version_info >= (3,):
+    extra['use_2to3'] = True
+    install_requires.append('PyRep')
+    dependency_links.append('git+https://github.com/stepjam/PyRep#egg=PyRep')
+else:
+    exclude.append("pypot.pyrep")
 
 if sys.version_info < (2, 7):
     print("python version < 2.7 is not supported")
@@ -35,15 +41,17 @@ if sys.version_info < (3, 4):
 
 setup(name='pypot',
       version=version(),
-      packages=find_packages(),
+      packages=find_packages(exclude=exclude),
 
       install_requires=install_requires,
+      dependency_links=dependency_links,
 
       extras_require={
           'doc': ['sphinx', 'sphinxjp.themes.basicstrap', 'sphinx-bootstrap-theme'],
           'zmq-server': ['zmq'],
           'remote-robot': ['zerorpc'],
-          'camera': ['hampy', 'zmq'],  # Extras require: opencv (not a PyPi packet)
+          # Extras require: opencv (not a PyPi packet)
+          'camera': ['hampy', 'zmq'],
           'tests': ['requests', 'websocket-client', 'poppy-ergo-jr'],
       },
 
