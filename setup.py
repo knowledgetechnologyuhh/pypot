@@ -26,8 +26,8 @@ dependency_links = []
 exclude = []
 if sys.version_info >= (3,):
     extra['use_2to3'] = True
-    install_requires.append('PyRep')
-    dependency_links.append('git+https://github.com/stepjam/PyRep#egg=PyRep')
+    install_requires.append('cffi')
+    install_requires.append('PyRep @ git+https://github.com/stepjam/PyRep#egg=PyRep')
 else:
     exclude.append("pypot.pyrep")
 
@@ -44,7 +44,6 @@ setup(name='pypot',
       packages=find_packages(exclude=exclude),
 
       install_requires=install_requires,
-      dependency_links=dependency_links,
 
       extras_require={
           'doc': ['sphinx', 'sphinxjp.themes.basicstrap', 'sphinx-bootstrap-theme'],
