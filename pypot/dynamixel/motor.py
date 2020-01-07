@@ -31,8 +31,7 @@ class DxlRegister(object):
         if not self.rw:
             raise AttributeError("can't set attribute")
 
-        logger.debug("Setting '%s.%s' to %s",
-                     instance.name, self.label, value)
+        logger.debug("Setting '%s.%s' to %s", instance.name, self.label, value)
         instance.__dict__[self.label] = value
 
         if instance._write_synchronous[self.label]:
@@ -43,7 +42,7 @@ class DxlRegister(object):
 class DxlOrientedRegister(DxlRegister):
     def __get__(self, instance, owner):
         value = DxlRegister.__get__(self, instance, owner)
-        return (value if instance.direct else -value)
+        return value if instance.direct else -value
 
     def __set__(self, instance, value):
         value = value if instance.direct else -value
@@ -65,7 +64,7 @@ class RegisterOwner(type):
         for n, v in attrs.items():
             if isinstance(v, DxlRegister):
                 v.label = n
-                attrs['registers'].append(n)
+                attrs["registers"].append(n)
         return super(RegisterOwner, cls).__new__(cls, name, bases, attrs)
 
 
@@ -89,12 +88,16 @@ class DxlMotor(Motor):
         Those properties are synchronized with the real motors values thanks to a :class:`~pypot.dynamixel.controller.DxlController`.
 
         """
+
     __metaclass__ = RegisterOwner
 
-    registers = Motor.registers + ['registers',
-                                   'goal_speed',
-                                   'compliant', 'safe_compliant',
-                                   'angle_limit']
+    registers = Motor.registers + [
+        "registers",
+        "goal_speed",
+        "compliant",
+        "safe_compliant",
+        "angle_limit",
+    ]
 
     id = DxlRegister()
     name = DxlRegister()
@@ -112,24 +115,30 @@ class DxlMotor(Motor):
     present_voltage = DxlRegister()
     present_temperature = DxlRegister()
 
-    def __init__(self, id, name=None, model='',
-                 direct=True, offset=0.0,
-                 broken=False,
-                 angle_limit=None):
-        self.__dict__['id'] = id
+    def __init__(
+        self,
+        id,
+        name=None,
+        model="",
+        direct=True,
+        offset=0.0,
+        broken=False,
+        angle_limit=None,
+    ):
+        self.__dict__["id"] = id
 
-        name = name if name is not None else 'motor_{}'.format(id)
-        self.__dict__['name'] = name
+        name = name if name is not None else "motor_{}".format(id)
+        self.__dict__["name"] = name
 
-        self.__dict__['model'] = model
-        self.__dict__['direct'] = direct
-        self.__dict__['offset'] = offset
+        self.__dict__["model"] = model
+        self.__dict__["direct"] = direct
+        self.__dict__["offset"] = offset
 
-        self.__dict__['compliant'] = True
+        self.__dict__["compliant"] = True
 
         self._safe_compliance = SafeCompliance(self)
-        self.goto_behavior = 'dummy'
-        self.compliant_behavior = 'dummy'
+        self.goto_behavior = "dummy"
+        self.compliant_behavior = "dummy"
 
         self._broken = broken
 
@@ -140,13 +149,12 @@ class DxlMotor(Motor):
         self._write_synced = defaultdict(SyncEvent)
 
         if angle_limit is not None:
-            self.__dict__['lower_limit'], self.__dict__[
-                'upper_limit'] = angle_limit
+            self.__dict__["lower_limit"], self.__dict__["upper_limit"] = angle_limit
 
     def __repr__(self):
-        return ('<DxlMotor name={self.name} '
-                'id={self.id} '
-                'pos={self.present_position}>').format(self=self)
+        return (
+            "<DxlMotor name={self.name} " "id={self.id} " "pos={self.present_position}>"
+        ).format(self=self)
 
     @property
     def goal_speed(self):
@@ -178,20 +186,21 @@ class DxlMotor(Motor):
 
     @compliant_behavior.setter
     def compliant_behavior(self, value):
-        if value not in ('dummy', 'safe'):
+        if value not in ("dummy", "safe"):
             raise ValueError(
-                'Wrong compliant type! It should be either "dummy" or "safe".')
+                'Wrong compliant type! It should be either "dummy" or "safe".'
+            )
 
-        if hasattr(self, '_compliant_behavior') and self._compliant_behavior == value:
+        if hasattr(self, "_compliant_behavior") and self._compliant_behavior == value:
             return
 
         self._compliant_behavior = value
 
         # Start the safe compliance behavior when the motor should be compliant
-        if value is 'safe' and self.compliant:
+        if value is "safe" and self.compliant:
             self._safe_compliance.start()
 
-        if value is 'dummy':
+        if value is "dummy":
             use_safe = self._safe_compliance.started
             if use_safe:
                 self._safe_compliance.stop()
@@ -199,17 +208,17 @@ class DxlMotor(Motor):
 
     @property
     def compliant(self):
-        return bool(self.__dict__['compliant'])
+        return bool(self.__dict__["compliant"])
 
     @compliant.setter
     def compliant(self, is_compliant):
         if self._safe_compliance.started and is_compliant:
             return
 
-        if self.compliant_behavior == 'dummy':
+        if self.compliant_behavior == "dummy":
             self._set_compliancy(is_compliant)
 
-        elif self.compliant_behavior == 'safe':
+        elif self.compliant_behavior == "safe":
             if is_compliant:
                 self._safe_compliance.start()
             elif self._safe_compliance.started:
@@ -219,7 +228,7 @@ class DxlMotor(Motor):
         # Change the goal_position only if you switch from compliant to not compliant mode
         if not is_compliant and self.compliant:
             self.goal_position = self.present_position
-        self.__dict__['compliant'] = is_compliant
+        self.__dict__["compliant"] = is_compliant
 
     @property
     def angle_limit(self):
@@ -235,9 +244,10 @@ class DxlMotor(Motor):
 
     @goto_behavior.setter
     def goto_behavior(self, value):
-        if value not in ('dummy', 'minjerk', 'linear'):
+        if value not in ("dummy", "minjerk", "linear"):
             raise ValueError(
-                'Wrong compliant type! It should be either "dummy", "minjerk" or "linear".')
+                'Wrong compliant type! It should be either "dummy", "minjerk" or "linear".'
+            )
         self._default_goto_behavior = value
 
     def goto_position(self, position, duration, control=None, wait=False):
@@ -246,14 +256,14 @@ class DxlMotor(Motor):
         if control is None:
             control = self.goto_behavior
 
-        if control == 'minjerk':
+        if control == "minjerk":
             goto_min_jerk = GotoMinJerk(self, position, duration)
             goto_min_jerk.start()
 
             if wait:
                 goto_min_jerk.wait_to_stop()
 
-        elif control == 'dummy':
+        elif control == "dummy":
             dp = abs(self.present_position - position)
             speed = (dp / float(duration)) if duration > 0 else 0
 
@@ -263,7 +273,7 @@ class DxlMotor(Motor):
             if wait:
                 time.sleep(duration)
 
-        elif control == 'linear':
+        elif control == "linear":
             goto_linear = GotoLinear(self, position, duration)
             goto_linear.start()
 
@@ -278,17 +288,23 @@ class DxlAXRXMotor(DxlMotor):
             * compliance margin/slope (see the robotis website for details)
 
         """
+
     registers = list(DxlMotor.registers)
 
     compliance_margin = DxlRegister(rw=True)
     compliance_slope = DxlRegister(rw=True)
 
-    def __init__(self, id, name=None, model='',
-                 direct=True, offset=0.0, broken=False,
-                 angle_limit=None):
-        DxlMotor.__init__(self, id, name, model,
-                          direct, offset, broken,
-                          angle_limit)
+    def __init__(
+        self,
+        id,
+        name=None,
+        model="",
+        direct=True,
+        offset=0.0,
+        broken=False,
+        angle_limit=None,
+    ):
+        DxlMotor.__init__(self, id, name, model, direct, offset, broken, angle_limit)
         self.max_pos = 150
 
 
@@ -299,22 +315,28 @@ class DxlMXMotor(DxlMotor):
             * PID gains (see the robotis website for details)
 
         """
+
     registers = list(DxlMotor.registers)
 
     pid = DxlRegister(rw=True)
 
-    def __init__(self, id, name=None, model='',
-                 direct=True, offset=0.0, broken=False,
-                 angle_limit=None):
+    def __init__(
+        self,
+        id,
+        name=None,
+        model="",
+        direct=True,
+        offset=0.0,
+        broken=False,
+        angle_limit=None,
+    ):
         """ This class represents the RX and MX robotis motor.
 
             This class adds access to:
                 * PID gains (see the robotis website for details)
 
             """
-        DxlMotor.__init__(self, id, name, model,
-                          direct, offset, broken,
-                          angle_limit)
+        DxlMotor.__init__(self, id, name, model, direct, offset, broken, angle_limit)
         self.max_pos = 180
 
 
@@ -330,18 +352,23 @@ class DxlMX64106Motor(DxlMXMotor):
 
     present_current = DxlRegister()
 
-    def __init__(self, id, name=None, model='',
-                 direct=True, offset=0.0, broken=False,
-                 angle_limit=None):
+    def __init__(
+        self,
+        id,
+        name=None,
+        model="",
+        direct=True,
+        offset=0.0,
+        broken=False,
+        angle_limit=None,
+    ):
         """ This class represents the RX and MX robotis motor.
 
             This class adds access to:
                 * PID gains (see the robotis website for details)
 
             """
-        DxlMotor.__init__(self, id, name, model,
-                          direct, offset, broken,
-                          angle_limit)
+        DxlMotor.__init__(self, id, name, model, direct, offset, broken, angle_limit)
         self.max_pos = 180
 
 
@@ -353,12 +380,17 @@ class DxlXL320Motor(DxlMXMotor):
 
     """ This class represents the XL-320 robotis motor. """
 
-    def __init__(self, id, name=None, model='XL-320',
-                 direct=True, offset=0.0, broken=False,
-                 angle_limit=None):
-        DxlMXMotor.__init__(self, id, name, model,
-                            direct, offset, broken,
-                            angle_limit)
+    def __init__(
+        self,
+        id,
+        name=None,
+        model="XL-320",
+        direct=True,
+        offset=0.0,
+        broken=False,
+        angle_limit=None,
+    ):
+        DxlMXMotor.__init__(self, id, name, model, direct, offset, broken, angle_limit)
         self.max_pos = 150
 
 
@@ -372,15 +404,23 @@ class DxlSRAresMotor(DxlMotor):
             * present current
 
         """
+
     registers = list(DxlMotor.registers)
 
     force_control_enable = DxlRegister(rw=True)
     goal_force = DxlRegister(rw=True)
     present_current = DxlRegister()
 
-    def __init__(self, id, name=None, model='',
-                 direct=True, offset=0.0, broken=False,
-                 angle_limit=None):
+    def __init__(
+        self,
+        id,
+        name=None,
+        model="",
+        direct=True,
+        offset=0.0,
+        broken=False,
+        angle_limit=None,
+    ):
         """ This class represents the seed robotics ares actuators found in
         old versions of the RH4D hand. (See Seed Robotics website for details)
 
@@ -390,9 +430,7 @@ class DxlSRAresMotor(DxlMotor):
             * present current
 
             """
-        DxlMotor.__init__(self, id, name, model,
-                          direct, offset, broken,
-                          angle_limit)
+        DxlMotor.__init__(self, id, name, model, direct, offset, broken, angle_limit)
         self.max_pos = 180
 
 
@@ -405,14 +443,22 @@ class DxlSRErosMotor(DxlMotor):
             * PID gains (see the robotis website for details)
 
         """
+
     registers = list(DxlMotor.registers)
 
     pid_lock = DxlRegister(rw=True)
     pid = DxlRegister(rw=True)
 
-    def __init__(self, id, name=None, model='',
-                 direct=True, offset=0.0, broken=False,
-                 angle_limit=None):
+    def __init__(
+        self,
+        id,
+        name=None,
+        model="",
+        direct=True,
+        offset=0.0,
+        broken=False,
+        angle_limit=None,
+    ):
         """ This class represents the seed robotics eros actuators found in
             most of their hand models. (See Seed Robotics website for details)
 
@@ -421,9 +467,7 @@ class DxlSRErosMotor(DxlMotor):
             * PID gains (see the robotis website for details)
 
             """
-        DxlMotor.__init__(self, id, name, model,
-                          direct, offset, broken,
-                          angle_limit)
+        DxlMotor.__init__(self, id, name, model, direct, offset, broken, angle_limit)
         self.max_pos = 180
 
 
@@ -436,14 +480,24 @@ class DxlSRBoard(DxlMotor):
             * ids of attached motors
 
         """
+
     registers = list(DxlMotor.registers)
 
     present_motor_currents = DxlRegister()
     attached_motor_ids = DxlRegister(rw=True)
+    palm_sensor_installed = DxlRegister()
+    palm_sensor_reading = DxlRegister()
 
-    def __init__(self, id, name=None, model='',
-                 direct=True, offset=0.0, broken=False,
-                 angle_limit=None):
+    def __init__(
+        self,
+        id,
+        name=None,
+        model="",
+        direct=True,
+        offset=0.0,
+        broken=False,
+        angle_limit=None,
+    ):
         """ This class represents the logic board found in the seed robotics
             hand. (See Seed Robotics website for details)
 
@@ -451,9 +505,7 @@ class DxlSRBoard(DxlMotor):
                 * current port readings
 
             """
-        DxlMotor.__init__(self, id, name, model,
-                          direct, offset, broken,
-                          angle_limit)
+        DxlMotor.__init__(self, id, name, model, direct, offset, broken, angle_limit)
         self.max_pos = 180
 
 
@@ -467,7 +519,12 @@ class SafeCompliance(StoppableLoopThread):
 
     def update(self):
         self.motor._set_compliancy(
-            (min(self.motor.angle_limit) < self.motor.present_position < max(self.motor.angle_limit)))
+            (
+                min(self.motor.angle_limit)
+                < self.motor.present_position
+                < max(self.motor.angle_limit)
+            )
+        )
 
     def teardown(self):
         self.motor._set_compliancy(False)

@@ -292,6 +292,16 @@ _add_control('present_pwm',
              address=0x5C, length=2,
              models=('SR-SEED28', 'SR-SEED56',))
 
+_add_control('palm_sensor_installed',
+             address=0x5D, length=1,
+             access=_DxlAccess.readonly,
+             models=('SR-EROSBRD',))
+
+_add_control('palm_sensor_reading',
+             address=0x5E, length=2,
+             access=_DxlAccess.readonly,
+             models=('SR-EROSBRD',))
+
 _add_control('present_motor_currents',
              address=0x6C, length=2, nb_elem=10,
              access=_DxlAccess.readonly,

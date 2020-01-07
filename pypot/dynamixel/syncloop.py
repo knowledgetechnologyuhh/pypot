@@ -1,6 +1,9 @@
 from ..robot.controller import MotorsController
-from .controller import (AngleLimitRegisterController, DxlController,
-                         PosSpeedLoadDxlController)
+from .controller import (
+    AngleLimitRegisterController,
+    DxlController,
+    PosSpeedLoadDxlController,
+)
 
 
 class MetaDxlController(MotorsController):
@@ -13,7 +16,7 @@ class MetaDxlController(MotorsController):
         """
 
     def __init__(self, io, motors, controllers):
-        MotorsController.__init__(self, io, motors, 1.)
+        MotorsController.__init__(self, io, motors, 1.0)
         self.controllers = controllers
 
     def setup(self):
@@ -42,64 +45,156 @@ class BaseDxlController(MetaDxlController):
 
     def __init__(self, io, motors):
         controllers = [
-            PosSpeedLoadDxlController(io, motors, 50.),
-
-            AngleLimitRegisterController(io, motors, 10., False),
-            DxlController(io, motors, 1., False, 'get', 'present_voltage'),
-            DxlController(io, motors, 1., False, 'get', 'present_temperature')
+            PosSpeedLoadDxlController(io, motors, 50.0),
+            AngleLimitRegisterController(io, motors, 10.0, False),
+            DxlController(io, motors, 1.0, False, "get", "present_voltage"),
+            DxlController(io, motors, 1.0, False, "get", "present_temperature"),
         ]
 
-        pid_motors = [m for m in motors
-                      if (m.model.startswith('MX') or
-                          m.model.startswith('XL-320'))]
+        pid_motors = [
+            m
+            for m in motors
+            if (m.model.startswith("MX") or m.model.startswith("XL-320"))
+        ]
         if pid_motors:
-            controllers.insert(0, DxlController(io, pid_motors, 10., False,
-                                                'set', 'pid_gain', 'pid'))
+            controllers.insert(
+                0, DxlController(io, pid_motors, 10.0, False, "set", "pid_gain", "pid")
+            )
 
-        force_control_motors = [
-            m for m in motors if m.model.startswith('SR-RH4D')]
+        force_control_motors = [m for m in motors if m.model.startswith("SR-RH4D")]
 
         if force_control_motors:
-            controllers.insert(0, DxlController(io, force_control_motors, 10., False,
-                                                'set', 'force_control_enable', 'force_control_enable'))
-            controllers.insert(0, DxlController(io, force_control_motors, 10., False,
-                                                'set', 'goal_force', 'goal_force'))
+            controllers.insert(
+                0,
+                DxlController(
+                    io,
+                    force_control_motors,
+                    10.0,
+                    False,
+                    "set",
+                    "force_control_enable",
+                    "force_control_enable",
+                ),
+            )
+            controllers.insert(
+                0,
+                DxlController(
+                    io,
+                    force_control_motors,
+                    10.0,
+                    False,
+                    "set",
+                    "goal_force",
+                    "goal_force",
+                ),
+            )
 
-        current_motors = [m for m in motors
-                          if (m.model.startswith('MX-64') or
-                              m.model.startswith('MX-106') or
-                              m.model.startswith('SR-RH4D'))]
+        current_motors = [
+            m
+            for m in motors
+            if (
+                m.model.startswith("MX-64")
+                or m.model.startswith("MX-106")
+                or m.model.startswith("SR-RH4D")
+            )
+        ]
 
         if current_motors:
-            controllers.insert(0, DxlController(io, current_motors, 10., False,
-                                                'get', 'present_current', 'present_current'))
+            controllers.insert(
+                0,
+                DxlController(
+                    io,
+                    current_motors,
+                    10.0,
+                    False,
+                    "get",
+                    "present_current",
+                    "present_current",
+                ),
+            )
 
-        seed_eros_motors = [m for m in motors if (
-            m.model.startswith('SR-SEED'))]
+        seed_eros_motors = [m for m in motors if (m.model.startswith("SR-SEED"))]
 
         if seed_eros_motors:
-            controllers.insert(0, DxlController(io, seed_eros_motors, 1., False,
-                                                'set', 'pid_lock', 'pid_lock'))
-            controllers.insert(0, DxlController(io, seed_eros_motors, 1., True,
-                                                'set', 'pid_gain', 'pid'))
+            controllers.insert(
+                0,
+                DxlController(
+                    io, seed_eros_motors, 1.0, False, "set", "pid_lock", "pid_lock"
+                ),
+            )
+            controllers.insert(
+                0,
+                DxlController(
+                    io, seed_eros_motors, 1.0, True, "set", "pid_gain", "pid"
+                ),
+            )
 
-        seed_logic_boards = [m for m in motors
-                             if (m.model.startswith('SR-EROSBRD'))]
+        seed_logic_boards = [m for m in motors if (m.model.startswith("SR-EROSBRD"))]
 
         if seed_logic_boards:
-            controllers.insert(0, DxlController(io, seed_logic_boards, 10., False,
-                                                'get', 'present_motor_currents', 'present_motor_currents'))
-            controllers.insert(0, DxlController(io, seed_logic_boards, 1., False,
-                                                'set', 'attached_motor_ids', 'attached_motor_ids'))
+            controllers.insert(
+                0,
+                DxlController(
+                    io,
+                    seed_logic_boards,
+                    10.0,
+                    False,
+                    "get",
+                    "present_motor_currents",
+                    "present_motor_currents",
+                ),
+            )
+            controllers.insert(
+                0,
+                DxlController(
+                    io,
+                    seed_logic_boards,
+                    1.0,
+                    False,
+                    "set",
+                    "attached_motor_ids",
+                    "attached_motor_ids",
+                ),
+            )
+            controllers.insert(
+                0,
+                DxlController(
+                    io,
+                    seed_logic_boards,
+                    10.0,
+                    False,
+                    "get",
+                    "palm_sensor_reading",
+                    "palm_sensor_reading",
+                ),
+            )
+            controllers.insert(
+                0,
+                DxlController(
+                    io,
+                    seed_logic_boards,
+                    1.0,
+                    False,
+                    "get",
+                    "palm_sensor_installed",
+                    "palm_sensor_installed",
+                ),
+            )
 
-        margin_slope_motors = [m for m in motors
-                               if (m.model.startswith('AX') or
-                                   m.model.startswith('RX'))]
+        margin_slope_motors = [
+            m for m in motors if (m.model.startswith("AX") or m.model.startswith("RX"))
+        ]
         if margin_slope_motors:
-            controllers.append(DxlController(io, margin_slope_motors, 10, False,
-                                             'set', 'compliance_margin'))
-            controllers.append(DxlController(io, margin_slope_motors, 10, False,
-                                             'set', 'compliance_slope'))
+            controllers.append(
+                DxlController(
+                    io, margin_slope_motors, 10, False, "set", "compliance_margin"
+                )
+            )
+            controllers.append(
+                DxlController(
+                    io, margin_slope_motors, 10, False, "set", "compliance_slope"
+                )
+            )
 
         MetaDxlController.__init__(self, io, motors, controllers)
 
@@ -107,32 +202,41 @@ class BaseDxlController(MetaDxlController):
 class LightDxlController(MetaDxlController):
     def __init__(self, io, motors):
         controllers = [
-            PosSpeedLoadDxlController(io, motors, 50.),
-
-            AngleLimitRegisterController(io, motors, 10., True),
-            DxlController(io, motors, 10., True, 'get', 'present_voltage'),
-            DxlController(io, motors, 10., True, 'get', 'present_temperature')
+            PosSpeedLoadDxlController(io, motors, 50.0),
+            AngleLimitRegisterController(io, motors, 10.0, True),
+            DxlController(io, motors, 10.0, True, "get", "present_voltage"),
+            DxlController(io, motors, 10.0, True, "get", "present_temperature"),
         ]
 
-        pid_motors = [m for m in motors
-                      if (m.model.startswith('MX') or
-                          m.model.startswith('XL-320'))]
+        pid_motors = [
+            m
+            for m in motors
+            if (m.model.startswith("MX") or m.model.startswith("XL-320"))
+        ]
         if pid_motors:
-            controllers.insert(0, DxlController(io, pid_motors, 10., True,
-                                                'set', 'pid_gain', 'pid'))
+            controllers.insert(
+                0, DxlController(io, pid_motors, 10.0, True, "set", "pid_gain", "pid")
+            )
 
-        margin_slope_motors = [m for m in motors
-                               if (m.model.startswith('AX') or
-                                   m.model.startswith('RX'))]
+        margin_slope_motors = [
+            m for m in motors if (m.model.startswith("AX") or m.model.startswith("RX"))
+        ]
         if margin_slope_motors:
-            controllers.append(DxlController(io, margin_slope_motors, 10., True,
-                                             'set', 'compliance_margin'))
-            controllers.append(DxlController(io, margin_slope_motors, 10., True,
-                                             'set', 'compliance_slope'))
+            controllers.append(
+                DxlController(
+                    io, margin_slope_motors, 10.0, True, "set", "compliance_margin"
+                )
+            )
+            controllers.append(
+                DxlController(
+                    io, margin_slope_motors, 10.0, True, "set", "compliance_slope"
+                )
+            )
 
-        led_motors = [m for m in motors if m.model.startswith('XL-320')]
+        led_motors = [m for m in motors if m.model.startswith("XL-320")]
         if led_motors:
-            controllers.append(DxlController(io, led_motors, 5., False,
-                                             'set', 'LED_color', 'led'))
+            controllers.append(
+                DxlController(io, led_motors, 5.0, False, "set", "LED_color", "led")
+            )
 
         MetaDxlController.__init__(self, io, motors, controllers)
