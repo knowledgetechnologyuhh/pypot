@@ -1,9 +1,8 @@
 import os
 
 from pyrep import PyRep
-from pyrep.backend import vrep
-from pyrep.backend._v_rep_cffi import lib
-from pyrep.backend.vrepConst import sim_simulation_advancing
+from pyrep.backend import sim
+from pyrep.backend._sim_cffi import lib
 from pyrep.const import ObjectType, PrimitiveShape
 from pyrep.objects.joint import Joint
 from pyrep.objects.shape import Shape
@@ -13,17 +12,18 @@ from ..robot.io import AbstractIO
 
 class PyRepIO(AbstractIO):
 
-    """ This class is used to get/set values from/to a V-REP scene.
+    """ This class is used to get/set values from/to a CoppeliaSim scene.
 
         It is based on PyRep (http://www.coppeliarobotics.com/helpFiles/en/PyRep.htm).
 
     """
 
-    def __init__(self, scene="", start=False, headless=False,
-                 responsive_ui=False, blocking=False):
-        """ Starts the connection with the V-REP remote API server.
+    def __init__(
+        self, scene="", start=False, headless=False, responsive_ui=False, blocking=False
+    ):
+        """ Starts the connection with the CoppeliaSim remote API server.
 
-        :param str scene: path to a V-REP scene file
+        :param str scene: path to a CoppeliaSim scene file
         :param bool start: whether to start the scene after loading it
         """
         self._closed = False
@@ -43,9 +43,9 @@ class PyRepIO(AbstractIO):
             self._closed = True
 
     def load_scene(self, scene_path, start=False):
-        """ Loads a scene on the V-REP server.
+        """ Loads a scene on the CoppeliaSim server.
 
-        :param str scene_path: path to a V-REP scene file
+        :param str scene_path: path to a CoppeliaSim scene file
         :param bool start: whether to directly start the simulation after
                            loading the scene
 
@@ -58,7 +58,7 @@ class PyRepIO(AbstractIO):
         if not os.path.exists(scene_path):
             raise IOError("No such file or directory: '{}'".format(scene_path))
 
-        vrep.simLoadScene(scene_path)
+        sim.simLoadScene(scene_path)
 
         if start:
             self.start_simulation()
@@ -78,7 +78,7 @@ class PyRepIO(AbstractIO):
 
     def pause_simulation(self):
         """ Pauses the simulation. """
-        vrep.simPauseSimulation()
+        sim.simPauseSimulation()
 
     def resume_simulation(self):
         """ Resumes the simulation. """
@@ -161,19 +161,19 @@ class PyRepIO(AbstractIO):
         return scene_object.get_orientation(relative_to_object)
 
     def get_object_handle(self, name):
-        """ Gets the vrep object handle. """
+        """ Gets the coppelia sim object handle. """
         scene_object = self.get_object(name)
 
         return scene_object.get_handle()
 
     def get_collision_state(self, collision_name):
         """ Gets the collision state. """
-        return vrep.simReadCollision(self.get_collision_handle(collision_name))
+        return sim.simReadCollision(self.get_collision_handle(collision_name))
 
     def get_collision_handle(self, collision):
-        """ Gets a vrep collisions handle. """
+        """ Gets a coppelia sim collisions handle. """
         if collision not in self._collision_handles:
-            h = vrep.simGetCollisionHandle(collision)
+            h = sim.simGetCollisionHandle(collision)
             self._collision_handles[collision] = h
 
         return self._collision_handles[collision]
@@ -182,13 +182,24 @@ class PyRepIO(AbstractIO):
         """ Gets the simulation current time. """
         try:
             return lib.simGetSimulationTime()
-        except VrepIOErrors:
+        except CoppeliaIOErrors:
             return 0.0
 
-    def add_cube(self, name, size, mass=1., backface_culling=False,
-                 visible_edges=False, smooth=False, respondable=True,
-                 static=False, renderable=True, position=None,
-                 orientation=None, color=None):
+    def add_cube(
+        self,
+        name,
+        size,
+        mass=1.0,
+        backface_culling=False,
+        visible_edges=False,
+        smooth=False,
+        respondable=True,
+        static=False,
+        renderable=True,
+        position=None,
+        orientation=None,
+        color=None,
+    ):
         """
         Add Cube
 
@@ -205,15 +216,37 @@ class PyRepIO(AbstractIO):
         :param orientation: The z, y, z orientation (in radians).
         :param color: The r, g, b values of the shape.
         """
-        self._create_pure_shape(name, PrimitiveShape.CUBOID, size, mass,
-                                backface_culling, visible_edges, smooth,
-                                respondable, static, renderable, position,
-                                orientation, color)
+        self._create_pure_shape(
+            name,
+            PrimitiveShape.CUBOID,
+            size,
+            mass,
+            backface_culling,
+            visible_edges,
+            smooth,
+            respondable,
+            static,
+            renderable,
+            position,
+            orientation,
+            color,
+        )
 
-    def add_sphere(self, name, size, mass=1., backface_culling=False,
-                   visible_edges=False, smooth=False, respondable=True,
-                   static=False, renderable=True, position=None,
-                   orientation=None, color=None):
+    def add_sphere(
+        self,
+        name,
+        size,
+        mass=1.0,
+        backface_culling=False,
+        visible_edges=False,
+        smooth=False,
+        respondable=True,
+        static=False,
+        renderable=True,
+        position=None,
+        orientation=None,
+        color=None,
+    ):
         """
         Add Sphere
 
@@ -230,15 +263,37 @@ class PyRepIO(AbstractIO):
         :param orientation: The z, y, z orientation (in radians).
         :param color: The r, g, b values of the shape.
         """
-        self._create_pure_shape(name, PrimitiveShape.SPHERE, size, mass,
-                                backface_culling, visible_edges, smooth,
-                                respondable, static, renderable, position,
-                                orientation, color)
+        self._create_pure_shape(
+            name,
+            PrimitiveShape.SPHERE,
+            size,
+            mass,
+            backface_culling,
+            visible_edges,
+            smooth,
+            respondable,
+            static,
+            renderable,
+            position,
+            orientation,
+            color,
+        )
 
-    def add_cylinder(self, name, size, mass=1., backface_culling=False,
-                     visible_edges=False, smooth=False, respondable=True,
-                     static=False, renderable=True, position=None,
-                     orientation=None, color=None):
+    def add_cylinder(
+        self,
+        name,
+        size,
+        mass=1.0,
+        backface_culling=False,
+        visible_edges=False,
+        smooth=False,
+        respondable=True,
+        static=False,
+        renderable=True,
+        position=None,
+        orientation=None,
+        color=None,
+    ):
         """
         Add Cylinder
 
@@ -255,15 +310,37 @@ class PyRepIO(AbstractIO):
         :param orientation: The z, y, z orientation (in radians).
         :param color: The r, g, b values of the shape.
         """
-        self._create_pure_shape(name, PrimitiveShape.CYLINDER, size, mass,
-                                backface_culling, visible_edges, smooth,
-                                respondable, static, renderable, position,
-                                orientation, color)
+        self._create_pure_shape(
+            name,
+            PrimitiveShape.CYLINDER,
+            size,
+            mass,
+            backface_culling,
+            visible_edges,
+            smooth,
+            respondable,
+            static,
+            renderable,
+            position,
+            orientation,
+            color,
+        )
 
-    def add_cone(self, name, size, mass=1., backface_culling=False,
-                 visible_edges=False, smooth=False, respondable=True,
-                 static=False, renderable=True, position=None,
-                 orientation=None, color=None):
+    def add_cone(
+        self,
+        name,
+        size,
+        mass=1.0,
+        backface_culling=False,
+        visible_edges=False,
+        smooth=False,
+        respondable=True,
+        static=False,
+        renderable=True,
+        position=None,
+        orientation=None,
+        color=None,
+    ):
         """
         Add Cone
 
@@ -280,10 +357,21 @@ class PyRepIO(AbstractIO):
         :param orientation: The z, y, z orientation (in radians).
         :param color: The r, g, b values of the shape.
         """
-        self._create_pure_shape(name, PrimitiveShape.CONE, size, mass,
-                                backface_culling, visible_edges, smooth,
-                                respondable, static, renderable, position,
-                                orientation, color)
+        self._create_pure_shape(
+            name,
+            PrimitiveShape.CONE,
+            size,
+            mass,
+            backface_culling,
+            visible_edges,
+            smooth,
+            respondable,
+            static,
+            renderable,
+            position,
+            orientation,
+            color,
+        )
 
     def change_object_name(self, obj, new_name):
         """ Change object name """
@@ -292,11 +380,22 @@ class PyRepIO(AbstractIO):
             self._objects.pop(old_name)
         obj.set_name(new_name)
 
-    def _create_pure_shape(self, name, primitive_type, size, mass=1.,
-                           backface_culling=False, visible_edges=False,
-                           smooth=False, respondable=True, static=False,
-                           renderable=True, position=None, orientation=None,
-                           color=None):
+    def _create_pure_shape(
+        self,
+        name,
+        primitive_type,
+        size,
+        mass=1.0,
+        backface_culling=False,
+        visible_edges=False,
+        smooth=False,
+        respondable=True,
+        static=False,
+        renderable=True,
+        position=None,
+        orientation=None,
+        color=None,
+    ):
         """
         Create Pure Shape
 
@@ -318,16 +417,27 @@ class PyRepIO(AbstractIO):
         :param orientation: The z, y, z orientation (in radians).
         :param color: The r, g, b values of the shape.
         """
-        obj = Shape.create(primitive_type, size, mass, backface_culling,
-                           visible_edges, smooth, respondable, static,
-                           renderable, position, orientation, color)
+        obj = Shape.create(
+            primitive_type,
+            size,
+            mass,
+            backface_culling,
+            visible_edges,
+            smooth,
+            respondable,
+            static,
+            renderable,
+            position,
+            orientation,
+            color,
+        )
         self.change_object_name(obj, name)
 
     def _create_object(self, name):
         """Creates pyrep object for the correct type"""
         # TODO implement other types
-        handle = vrep.simGetObjectHandle(name)
-        o_type = vrep.simGetObjectType(handle)
+        handle = sim.simGetObjectHandle(name)
+        o_type = sim.simGetObjectType(handle)
         if ObjectType(o_type) == ObjectType.JOINT:
             return Joint(handle)
         elif ObjectType(o_type) == ObjectType.SHAPE:
@@ -336,7 +446,7 @@ class PyRepIO(AbstractIO):
             return None
 
     def get_object(self, name):
-        """ Gets vrep scene object"""
+        """ Gets CoppeliaSim scene object"""
         if name not in self._objects:
             self._objects[name] = self._create_object(name)
         return self._objects[name]
@@ -344,5 +454,5 @@ class PyRepIO(AbstractIO):
     # TODO integrate other pyrep functions
 
 
-class VrepIOErrors(Exception):
+class CoppeliaIOErrors(Exception):
     pass

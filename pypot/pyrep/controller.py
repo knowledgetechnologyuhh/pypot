@@ -8,19 +8,19 @@ from ..robot.sensor import Sensor
 
 
 class PyRepController(MotorsController):
-    """ V-REP motors controller using PyRep. """
+    """ CoppeliaSim motors controller using PyRep. """
 
-    def __init__(self, vrep_io, motors, sync_freq=50., id=None):
+    def __init__(self, pyrep_io, motors, sync_freq=50.0, id=None):
         """
-        :param vrep_io: vrep io instance
-        :type vrep_io: :class:`~pypot.vrep.io.VrepIO`
-        :param str scene: path to the V-REP scene file to start
+        :param pyrep_io: pyrep io instance
+        :type pyrep_io: :class:`~pypot.pyrep.io.PyRepIO`
+        :param str scene: path to the CoppeliaSim scene file to start
         :param list motors: list of motors attached to the controller
         :param float sync_freq: synchronization frequency
         :param int id: robot id in simulator (useful when using a scene with multiple robots)
 
         """
-        MotorsController.__init__(self, vrep_io, motors, sync_freq)
+        MotorsController.__init__(self, pyrep_io, motors, sync_freq)
 
         self.id = id
 
@@ -31,17 +31,17 @@ class PyRepController(MotorsController):
         """
         Setups the controller by reading/setting position for all motors.
         """
-        self._init_vrep_streaming()
+        self._init_motor_values()
 
         # Init lifo for temperature spoofing
         for m in self.motors:
-            m.__dict__['_load_fifo'] = deque(200 * [1], maxlen=200)
+            m.__dict__["_load_fifo"] = deque(200 * [1], maxlen=200)
         self.update()
 
     def update(self):
         """ Synchronization update loop.
 
-        At each update all motor position are read from vrep and set to the
+        At each update all motor position are read from CoppeliaSim and set to the
         motors. The motors target position are also send to v-rep.
 
         """
@@ -50,67 +50,68 @@ class PyRepController(MotorsController):
 
             # Read values from V-REP and set them to the Motor
             p = round(
-                rad2deg(self.io.get_motor_position(motor_name=self._motor_name(m))), 1)
-            m.__dict__['present_position'] = p
+                rad2deg(self.io.get_motor_position(motor_name=self._motor_name(m))), 1
+            )
+            m.__dict__["present_position"] = p
 
             try:
-                l = 100. * \
-                    self.io.get_motor_force(motor_name=self._motor_name(m)) / \
-                    tmax
+                l = (
+                    100.0
+                    * self.io.get_motor_force(motor_name=self._motor_name(m))
+                    / tmax
+                )
             except RuntimeError:
-                l = 100.
-            m.__dict__['present_load'] = l
+                l = 100.0
+            m.__dict__["present_load"] = l
 
-            m.__dict__['_load_fifo'].append(abs(l))
-            m.__dict__['present_temperature'] = 25 + \
-                round(2.5 * sum(m.__dict__['_load_fifo']
-                                ) / len(m.__dict__['_load_fifo']), 1)
+            m.__dict__["_load_fifo"].append(abs(l))
+            m.__dict__["present_temperature"] = 25 + round(
+                2.5 * sum(m.__dict__["_load_fifo"]) / len(m.__dict__["_load_fifo"]), 1
+            )
 
             lower, upper = self.io.get_motor_limits(self._motor_name(m))
-            m.__dict__['lower_limit'] = lower
-            m.__dict__['upper_limit'] = upper
+            m.__dict__["lower_limit"] = lower
+            m.__dict__["upper_limit"] = upper
 
             # Send new values from Motor to V-REP
-            p = deg2rad(round(m.__dict__['goal_position'], 1))
-            self.io.set_motor_position(
-                motor_name=self._motor_name(m), position=p)
+            p = deg2rad(round(m.__dict__["goal_position"], 1))
+            self.io.set_motor_position(motor_name=self._motor_name(m), position=p)
 
-            t = m.__dict__['torque_limit'] * tmax / 100.
+            t = m.__dict__["torque_limit"] * tmax / 100.0
 
-            if m.__dict__['compliant']:
-                t = 0.
+            if m.__dict__["compliant"]:
+                t = 0.0
 
             self.io.set_motor_force(motor_name=self._motor_name(m), force=t)
 
-    def _init_vrep_streaming(self):
+    def _init_motor_values(self):
         # Initialize motor positions
         # get initial position
-        pos = [self.io.get_motor_position(
-            self._motor_name(m)) for m in self.motors]
+        pos = [self.io.get_motor_position(self._motor_name(m)) for m in self.motors]
 
         # update goal positions
         for m, p in zip(self.motors, pos):
             self.io.set_motor_position(self._motor_name(m), p)
-            m.__dict__['goal_position'] = rad2deg(p)
+            m.__dict__["goal_position"] = rad2deg(p)
 
         for m in self.motors:
             self.io.set_motor_force(self._motor_name(m), torque_max[m.model])
-            m.__dict__['torque_limit'] = 100.
-            m.__dict__['compliant'] = False
+            m.__dict__["torque_limit"] = 100.0
+            m.__dict__["compliant"] = False
 
     def _motor_name(self, m):
         if self.id is None:
             return m.name
         else:
-            return '{}{}'.format(m.name, self.id)
+            return "{}{}".format(m.name, self.id)
 
 
-class VrepObjectTracker(SensorsController):
+class CoppeliaSimObjectTracker(SensorsController):
 
-    """ Tracks the 3D position and orientation of a V-REP object. """
+    """ Tracks the 3D position and orientation of a CoppeliaSim object. """
 
     def setup(self):
-        """ Forces a first update to trigger V-REP streaming. """
+        """ Forces a first update to trigger CoppeliaSim streaming. """
         self.update()
 
     def update(self):
@@ -120,8 +121,7 @@ class VrepObjectTracker(SensorsController):
             s.orientation = self.io.get_object_orientation(object_name=s.name)
 
 
-class VrepCollisionDetector(Sensor):
-
+class CoppeliaSimCollisionDetector(Sensor):
     def __init__(self, name):
         Sensor.__init__(self, name)
 
@@ -136,12 +136,12 @@ class VrepCollisionDetector(Sensor):
         self._colliding = new_state
 
 
-class VrepCollisionTracker(SensorsController):
+class CoppeliaSimCollisionTracker(SensorsController):
 
     """ Tracks collision state. """
 
     def setup(self):
-        """ Forces a first update to trigger V-REP streaming. """
+        """ Forces a first update to trigger CoppeliaSim streaming. """
         self.update()
 
     def update(self):

@@ -28,8 +28,8 @@ dependency_links = []
 exclude = []
 if sys.version_info >= (3,):
     extra["use_2to3"] = True
-    if "VREP_ROOT" in os.environ and os.path.isfile(
-        os.environ["VREP_ROOT"] + "/vrep.sh"
+    if "COPPELIASIM_ROOT" in os.environ and os.path.isfile(
+        os.environ["COPPELIASIM_ROOT"] + "/coppeliaSim.sh"
     ):
         install_requires.append("cffi")
         install_requires.append(
